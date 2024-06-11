@@ -1,6 +1,9 @@
 from rest_framework import serializers
 from .models import Employee, Role
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from django.contrib.auth import authenticate
+from rest_framework import serializers
+from rest_framework_simplejwt.tokens import RefreshToken
+from django.contrib.auth import get_user_model
 
 
 class EmployeeSerializer(serializers.ModelSerializer):
@@ -9,19 +12,33 @@ class EmployeeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Employee
-        fields = ['username', 'password', 'last_name', 'email', 'phone_number', 'date_of_birth', 'address', 'role']
+        fields = ['username', 'password', 'email', 'phone_number', 'date_of_birth', 'address', 'role']
 
 
-class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
-    @classmethod
-    def get_token(cls, user):
-        token = super().get_token(user)
+class CustomTokenObtainSerializer(serializers.Serializer):
+    username = serializers.CharField()
+    password = serializers.CharField()
 
-        # Include the user's role in the token
-        token['role'] = user.employee.role.name
+    def validate(self, attrs):
+        Employee = get_user_model()
 
-        return token
-    
+        try:
+            employee = Employee.objects.get(username=attrs['username'])
+            print("username",employee)
+            
+        except Employee.DoesNotExist:
+            raise serializers.ValidationError('Username does not exist')
+
+        if not employee.check_password(attrs['password']):
+            print("pass",employee.check_password(attrs['password']))
+            raise serializers.ValidationError('Incorrect password')
+
+        refresh = RefreshToken.for_user(employee)
+
+        return {
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+        }
 
 class RoleSerializer(serializers.ModelSerializer):
     class Meta:

@@ -1,6 +1,6 @@
 from rest_framework import viewsets, mixins
 from .models import Employee, Role
-from .serializers import EmployeeSerializer, MyTokenObtainPairSerializer, RoleSerializer
+from .serializers import EmployeeSerializer, CustomTokenObtainSerializer, RoleSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.response import Response
 from rest_framework import status
@@ -30,11 +30,16 @@ class EmployeeViewSet(BaseViewSet):
         }, status=status.HTTP_201_CREATED, headers=headers)
 
     def perform_create(self, serializer):
-        return serializer.save()
+        user = serializer.save()
+        user.set_password(serializer.validated_data['password'])
+        user.is_active = True
+        user.save()
+        return user
    
 
 class MyTokenObtainPairView(TokenObtainPairView):
-    serializer_class = MyTokenObtainPairSerializer
+    serializer_class = CustomTokenObtainSerializer
+    print("MyTokenOb",serializer_class)
     
 class RoleViewSet(viewsets.ModelViewSet):
     queryset = Role.objects.all()

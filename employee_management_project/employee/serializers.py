@@ -24,22 +24,29 @@ class CustomTokenObtainSerializer(serializers.Serializer):
 
         try:
             employee = Employee.objects.get(username=attrs['username'])
-            print("username",employee)
+            
             
         except Employee.DoesNotExist:
             raise serializers.ValidationError('Username does not exist')
 
         if not employee.check_password(attrs['password']):
-            print("pass",employee.check_password(attrs['password']))
             raise serializers.ValidationError('Incorrect password')
 
         refresh = RefreshToken.for_user(employee)
 
-        return {
+        refresh.payload['role'] = str(employee.role)
+
+        access = refresh.access_token
+        access.payload['role'] = str(employee.role)
+
+        data = {
             'refresh': str(refresh),
-            'access': str(refresh.access_token),
+            'access': str(access),
         }
 
+        return data
+    
+    
 class RoleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Role

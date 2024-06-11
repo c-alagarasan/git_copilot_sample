@@ -5,11 +5,11 @@ from drf_yasg import openapi
 from rest_framework.routers import DefaultRouter
 from .views import EmployeeViewSet, RoleViewSet  # Import your viewset
 from .views import MyTokenObtainPairView
+from rest_framework.permissions import AllowAny
 
 router = DefaultRouter()
 router.register('employees', EmployeeViewSet, basename='employee')  # Register your viewset
 router.register(r'roles', RoleViewSet)
-
 
 schema_view = get_schema_view(
     openapi.Info(
@@ -21,7 +21,7 @@ schema_view = get_schema_view(
         license=openapi.License(name="BSD License"),
     ),
     public=True,
-    permission_classes=(permissions.AllowAny,),
+    permission_classes=(AllowAny,),
 )
 
 urlpatterns = [
@@ -30,7 +30,4 @@ urlpatterns = [
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
     path('api/token/', MyTokenObtainPairView.as_view(), name='token_obtain_pair'),
-
-
-    
 ]

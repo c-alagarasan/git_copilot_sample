@@ -3,6 +3,9 @@ from .models import Employee, Role
 from .serializers import EmployeeSerializer, CustomTokenObtainSerializer, RoleSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from rest_framework import viewsets
+from django.core.exceptions import PermissionDenied
 from rest_framework import status
 
 class BaseViewSet(viewsets.GenericViewSet,
@@ -44,3 +47,13 @@ class MyTokenObtainPairView(TokenObtainPairView):
 class RoleViewSet(viewsets.ModelViewSet):
     queryset = Role.objects.all()
     serializer_class = RoleSerializer
+    permission_classes = [IsAuthenticated]
+
+    def create(self, request, *args, **kwargs):
+        user_role = request.user.role  
+        print("user_role",user_role)
+
+        if user_role.name != 'Admin':  # replace 'name' with the actual field name for the role's name
+            raise PermissionDenied('You do not have permission to create roles.')
+
+        return super().create(request, *args, **kwargs)
